@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  # property-listing-backend:
+  #   build: .
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - MONGO_URI=mongodb://boomershub:Xq0gYvRjCTxHKzyB@mongodb:27017/property-listing
+  #   depends_on:
+  #     - mongodb
+  #   networks:
+  #     - app-network
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: boomershub
+      MONGO_INITDB_ROOT_PASSWORD: Xq0gYvRjCTxHKzyB
+      MONGO_INITDB_DATABASE: property-listing
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
