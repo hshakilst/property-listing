@@ -1,8 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Base, BaseDocument } from './base.model';
+import { BaseModel, BaseDocument } from './base.model';
 import { PropertySource, PropertySourceEnum } from '../types/property.type';
 
-export type PropertyDocument = Property & BaseDocument;
+export type PropertyDocument = PropertyModel & BaseDocument;
 
 @Schema({
   autoIndex: true,
@@ -11,7 +11,7 @@ export type PropertyDocument = Property & BaseDocument;
   id: true,
   versionKey: false,
 })
-export class Property extends Base {
+export class PropertyModel extends BaseModel {
   @Prop({ required: true, unique: true })
   externalId: string;
 
@@ -21,14 +21,14 @@ export class Property extends Base {
   @Prop({ required: true })
   city: string;
 
-  @Prop({ required: true, type: Number })
-  zip: number;
+  @Prop({ required: true })
+  zip: string;
 
   @Prop({ required: true })
   state: string;
 
   @Prop({ type: [String] })
-  imageUrls: string[];
+  imageUrls?: string[];
 
   @Prop({ required: true })
   address: string;
@@ -36,14 +36,14 @@ export class Property extends Base {
   @Prop({ required: true })
   county: string;
 
-  @Prop({ required: true })
-  phone: string;
+  @Prop({ required: true, default: '' })
+  phone?: string;
 
   @Prop({ required: true })
   type: string;
 
-  @Prop({ required: true, type: Number })
-  capacity: number;
+  @Prop({ required: true, type: Number, default: 0 })
+  capacity?: number;
 
   @Prop({
     required: true,
@@ -51,12 +51,24 @@ export class Property extends Base {
     enum: PropertySourceEnum,
   })
   source: PropertySource;
+
+  @Prop({ required: true })
+  sourceUrl: string;
+
+  @Prop({ required: true, unique: true })
+  detailsUrl: string;
+
+  @Prop({ required: true, default: '' })
+  mapUrl?: string;
 }
 
-export const PropertySchema = SchemaFactory.createForClass(Property);
+export const PropertySchema = SchemaFactory.createForClass(PropertyModel);
 
 // Needed for updating properties from scraper
 PropertySchema.index({ externalId: 1, source: 1 }, { unique: true });
 
 // Needed for searching properties by name
 PropertySchema.index({ name: 1 });
+
+// Needed for Scraping Details
+PropertySchema.index({ detailsUrl: 1 });

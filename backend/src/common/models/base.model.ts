@@ -1,10 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
-export type BaseDocument = Base & Document;
+export type BaseDocument = BaseModel & Document;
 
 @Schema()
-export class Base {
+export class BaseModel {
   // @Prop({ default: Date.now })
   // createdAt: Date;
 
@@ -18,19 +18,7 @@ export class Base {
   deletedAt: Date;
 }
 
-export const BaseSchema = SchemaFactory.createForClass(Base);
-
-// Update timestamp before save
-// const updateTimestamp = function (next) {
-//   this.set({ updatedAt: new Date() });
-//   next();
-// };
-
-// Hooks for various update operations
-// BaseSchema.pre<BaseDocument>('save', updateTimestamp);
-// BaseSchema.pre<BaseDocument>('findOneAndUpdate', updateTimestamp);
-// BaseSchema.pre<BaseDocument>('updateOne', updateTimestamp);
-// BaseSchema.pre<BaseDocument>('updateMany', updateTimestamp);
+export const BaseSchema = SchemaFactory.createForClass(BaseModel);
 
 // Soft delete
 const excludeSoftDeleted = function (next) {
@@ -44,16 +32,16 @@ BaseSchema.pre<BaseDocument>('findOne', excludeSoftDeleted);
 BaseSchema.pre<BaseDocument>('countDocuments', excludeSoftDeleted);
 
 // Static method for upsert
-BaseSchema.statics.upsert = async function (query, update) {
-  const options = { new: true, upsert: true, setDefaultsOnInsert: true };
-  return this.findOneAndUpdate(query, update, options);
-};
+// BaseSchema.statics.upsert = async function (query, update) {
+//   const options = { new: true, upsert: true, setDefaultsOnInsert: true };
+//   return this.findOneAndUpdate(query, update, options);
+// };
 
 // Static method for soft delete
-BaseSchema.statics.softDelete = async function (id) {
-  return this.findByIdAndUpdate(
-    id,
-    { isDeleted: true, deletedAt: new Date() },
-    { new: true },
-  );
-};
+// BaseSchema.statics.softDelete = async function (id) {
+//   return this.findByIdAndUpdate(
+//     id,
+//     { isDeleted: true, deletedAt: new Date() },
+//     { new: true },
+//   );
+// };

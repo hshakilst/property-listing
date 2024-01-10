@@ -30,5 +30,15 @@
   },
   "[typescript]": {
     "editor.defaultFormatter": "rvest.vs-code-prettier-eslint"
-  }
+  },
+  "cSpell.words": [
+    "crawlee",
+    "factype",
+    "ftype",
+    "healthfinder",
+    "locsearch",
+    "PPECC",
+    "searchterm",
+    "sortabletable"
+  ]
 }
