@@ -1,9 +1,16 @@
 import { Property } from './../../../common/types/property.type';
 import { Injectable, Logger } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
 import { CheerioCrawler, gotScraping, RequestList } from 'crawlee';
+import { Model } from 'mongoose';
+import { PropertyModel } from '../../../common/models/property.model';
 
 @Injectable()
 export class HHSTexasGovSource {
+  constructor(
+    @InjectModel(PropertyModel.name)
+    private readonly propertyModel: Model<PropertyModel>,
+  ) {}
   // Define the URL Schemes
   private readonly baseUrl = 'https://apps.hhs.texas.gov/LTCSearch';
   private readonly nameSearchUrl =
@@ -45,7 +52,7 @@ export class HHSTexasGovSource {
   private async handleRequest({ request, $ }): Promise<void> {
     try {
       // Iterate over each row in the table body
-      $('table.sortabletable tbody tr').each((index, element) => {
+      $('table.sortabletable tbody tr').each(async (index, element) => {
         // Extract the provider name and href
         const providerLink = $(element).find('td').eq(0).find('a');
         const name = providerLink.text().trim();
@@ -60,31 +67,58 @@ export class HHSTexasGovSource {
         const type = $(element).find('td').eq(5).text().trim();
         const sourceUrl = request.url;
 
+        if (
+          !(await this.propertyModel.exists({
+            $or: [{ externalId }, { detailsUrl }],
+          }))
+        ) {
+          await this.propertyModel.updateOne(
+            { externalId, detailsUrl },
+            {
+              externalId,
+              name,
+              type,
+              detailsUrl,
+              address,
+              city,
+              zip,
+              county,
+              state: 'Texas',
+              source: 'hhs.texas.gov',
+              sourceUrl,
+            },
+            { upsert: true, new: true },
+          );
+        } else {
+          this.logger.debug('Property already exists');
+          this.logger.debug(externalId, name, detailsUrl, sourceUrl);
+        }
+
         // Push the extracted data to the array
-        this.results.push({
-          externalId,
-          name,
-          type,
-          detailsUrl,
-          address,
-          city,
-          zip,
-          county,
-          state: 'Texas',
-          source: 'hhs.texas.gov',
-          sourceUrl,
-        });
-        this.logger.debug(
-          externalId,
-          name,
-          detailsUrl,
-          address,
-          city,
-          zip,
-          county,
-          type,
-          sourceUrl,
-        );
+        // this.results.push({
+        //   externalId,
+        //   name,
+        //   type,
+        //   detailsUrl,
+        //   address,
+        //   city,
+        //   zip,
+        //   county,
+        //   state: 'Texas',
+        //   source: 'hhs.texas.gov',
+        //   sourceUrl,
+        // });
+        // this.logger.debug(
+        //   externalId,
+        //   name,
+        //   detailsUrl,
+        //   address,
+        //   city,
+        //   zip,
+        //   county,
+        //   type,
+        //   sourceUrl,
+        // );
       });
     } catch (error) {
       this.logger.error(error);
@@ -169,8 +203,8 @@ export class HHSTexasGovSource {
         requestList,
         requestHandler: this.handleRequest.bind(this),
         failedRequestHandler: this.failedRequest.bind(this),
-        requestHandlerTimeoutSecs: 60,
-        maxRequestRetries: 3,
+        requestHandlerTimeoutSecs: 120,
+        maxRequestRetries: 5,
       });
 
       this.logger.debug('HHSTexasGovSource.crawl()');
@@ -191,10 +225,10 @@ export class HHSTexasGovSource {
     try {
       await crawler.teardown();
       console.log('Crawler stopped.');
-      process.exit(0);
+      // process.exit(0);
     } catch (error) {
       console.error('Error during shutdown:', error);
-      process.exit(1);
+      // process.exit(1);
     }
   }
 }

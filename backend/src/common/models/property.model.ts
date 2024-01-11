@@ -12,7 +12,7 @@ export type PropertyDocument = PropertyModel & BaseDocument;
   versionKey: false,
 })
 export class PropertyModel extends BaseModel {
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true })
   externalId: string;
 
   @Prop({ required: true })
@@ -55,7 +55,7 @@ export class PropertyModel extends BaseModel {
   @Prop({ required: true })
   sourceUrl: string;
 
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true })
   detailsUrl: string;
 
   @Prop({ required: true, default: '' })
@@ -65,7 +65,10 @@ export class PropertyModel extends BaseModel {
 export const PropertySchema = SchemaFactory.createForClass(PropertyModel);
 
 // Needed for updating properties from scraper
-PropertySchema.index({ externalId: 1, source: 1 }, { unique: true });
+PropertySchema.index({ externalId: 1, source: 1 });
+
+// Needed for scraping properties from crawler
+PropertySchema.index({ detailsUrl: 1, source: 1 });
 
 // Needed for searching properties by name
 PropertySchema.index({ name: 1 });
