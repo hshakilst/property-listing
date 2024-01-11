@@ -13,9 +13,9 @@ export interface Property {
   county: string;
   phone?: string;
   type: string;
-  capacity?: number;
   source: PropertySource;
   sourceUrl: string;
   detailsUrl: string;
   mapUrl?: string;
+  descriptions?: string[];
 }

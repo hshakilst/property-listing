@@ -14,7 +14,8 @@ export class CrawlerService {
   // Crawl apps.hhs.texas.gov
   async crawlAppsHhsTexasGov() {
     this.logger.debug('CrawlerService.crawlAppsHhsTexasGov()');
-    await this.hhsTexas.crawl();
+    await this.hhsTexas.crawlSearchResult();
+    await this.hhsTexas.crawlDetailsPage();
     this.logger.debug('CrawlerService.crawlAppsHhsTexasGov() completed');
   }
 

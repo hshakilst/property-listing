@@ -42,9 +42,6 @@ export class PropertyModel extends BaseModel {
   @Prop({ required: true })
   type: string;
 
-  @Prop({ required: true, type: Number, default: 0 })
-  capacity?: number;
-
   @Prop({
     required: true,
     type: String,
@@ -60,6 +57,9 @@ export class PropertyModel extends BaseModel {
 
   @Prop({ required: true, default: '' })
   mapUrl?: string;
+
+  @Prop({ type: [String], required: true, default: [] })
+  descriptions: string[];
 }
 
 export const PropertySchema = SchemaFactory.createForClass(PropertyModel);
