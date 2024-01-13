@@ -64,34 +64,35 @@ export class HHSTexasGovSource {
         const type = $(element).find('td').eq(5).text().trim();
         const sourceUrl = request.url;
 
-        if (
-          !(await this.propertyModel.exists({
+        // if (
+        //   !(await this.propertyModel.exists({
+        //     externalId,
+        //     source: 'hhs.texas.gov',
+        //     detailsUrl,
+        //   }))
+        // ) {
+        await this.propertyModel.updateOne(
+          { externalId, source: 'hhs.texas.gov', detailsUrl },
+          {
             externalId,
-            source: 'hhs.texas.gov',
+            name,
+            type,
             detailsUrl,
-          }))
-        ) {
-          await this.propertyModel.updateOne(
-            { externalId, source: 'hhs.texas.gov', detailsUrl },
-            {
-              externalId,
-              name,
-              type,
-              detailsUrl,
-              address,
-              city,
-              zip,
-              county,
-              state: 'Texas',
-              source: 'hhs.texas.gov',
-              sourceUrl,
-            },
-            { upsert: true, new: true },
-          );
-        } else {
-          this.logger.debug('Property already exists');
-          this.logger.debug(externalId, name, detailsUrl, sourceUrl);
-        }
+            address,
+            city,
+            zip,
+            county,
+            state: 'Texas',
+            source: 'hhs.texas.gov',
+            sourceUrl,
+          },
+          { upsert: true, new: true },
+        );
+        // }
+        //   else {
+        //     this.logger.debug('Property already exists');
+        //     this.logger.debug(externalId, name, detailsUrl, sourceUrl);
+        //   }
       });
     } catch (error) {
       this.logger.error(error);
@@ -151,8 +152,6 @@ export class HHSTexasGovSource {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
-          retryCount: 3,
-          timeoutSecs: 120,
         })),
       );
       this.logger.debug(requestList.length());
@@ -177,7 +176,6 @@ export class HHSTexasGovSource {
           useExtendedUniqueKey: true,
           url: this.baseUrl + '/' + url.detailsUrl,
           method: 'GET',
-          retryCount: 3,
         })),
       );
       this.logger.debug(requestList.length());
@@ -236,8 +234,9 @@ export class HHSTexasGovSource {
         requestHandler: this.handleSearchRequest.bind(this),
         failedRequestHandler: this.failedRequest.bind(this),
         requestHandlerTimeoutSecs: 120,
-        maxRequestRetries: 3,
-        navigationTimeoutSecs: 60,
+        maxRequestRetries: 5,
+        navigationTimeoutSecs: 120,
+        // maxRequestsPerMinute: 60,//average: 1100+ requests per minute
       });
 
       this.logger.debug('HHSTexasGovSource.crawl()');
@@ -261,8 +260,9 @@ export class HHSTexasGovSource {
         requestHandler: this.handleDetailsPageRequest.bind(this),
         failedRequestHandler: this.failedRequest.bind(this),
         requestHandlerTimeoutSecs: 120,
-        maxRequestRetries: 3,
+        maxRequestRetries: 5,
         navigationTimeoutSecs: 60,
+        // maxRequestsPerMinute: 60,
       });
 
       this.logger.debug('HHSTexasGovSource.crawlDetailsPage()');

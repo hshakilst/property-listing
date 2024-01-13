@@ -32,6 +32,7 @@
     "editor.defaultFormatter": "rvest.vs-code-prettier-eslint"
   },
   "cSpell.words": [
+    "autoscaled",
     "crawlee",
     "factype",
     "ftype",
