@@ -7,16 +7,21 @@ import { EnvHelper } from './common/helpers/env.helper';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ProvidersModule } from './providers/providers.module';
 import { ServicesModule } from './services/services.module';
+import { PropertyModel, PropertySchema } from './common/models/property.model';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: EnvHelper.determineEnvFilePath(),
+      envFilePath: ['.env.local', '.env.test'],
       validationSchema: EnvHelper.validationSchema(),
+      ignoreEnvFile: process.env.NODE_ENV === 'production',
     }),
     MongooseModule.forRoot(EnvHelper.getMongoDbUri()),
     ScheduleModule.forRoot(),
+    MongooseModule.forFeature([
+      { name: PropertyModel.name, schema: PropertySchema },
+    ]),
     ProvidersModule,
     ServicesModule,
   ],

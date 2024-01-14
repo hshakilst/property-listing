@@ -1,3 +1,4 @@
+import { CrawlerHelper } from './../../../common/helpers/crawler.helper';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { CheerioCrawler, gotScraping, RequestList } from 'crawlee';
@@ -46,6 +47,9 @@ export class HHSTexasGovSource {
 
   private readonly logger = new Logger(HHSTexasGovSource.name);
 
+  // Define the crawler and handlers
+  private crawler: CheerioCrawler;
+
   private async handleSearchRequest({ request, $ }): Promise<void> {
     try {
       // Iterate over each row in the table body
@@ -64,13 +68,6 @@ export class HHSTexasGovSource {
         const type = $(element).find('td').eq(5).text().trim();
         const sourceUrl = request.url;
 
-        // if (
-        //   !(await this.propertyModel.exists({
-        //     externalId,
-        //     source: 'hhs.texas.gov',
-        //     detailsUrl,
-        //   }))
-        // ) {
         await this.propertyModel.updateOne(
           { externalId, source: 'hhs.texas.gov', detailsUrl },
           {
@@ -88,11 +85,6 @@ export class HHSTexasGovSource {
           },
           { upsert: true, new: true },
         );
-        // }
-        //   else {
-        //     this.logger.debug('Property already exists');
-        //     this.logger.debug(externalId, name, detailsUrl, sourceUrl);
-        //   }
       });
     } catch (error) {
       this.logger.error(error);
@@ -105,14 +97,22 @@ export class HHSTexasGovSource {
       const phoneText = $('i.fa-phone').parent().text().trim();
       const phoneMatch = phoneText.match(/\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/);
       const phone = phoneMatch ? phoneMatch[0] : 'N/A';
-      const mapLink = $('i.fa-map-marker').parent().find('a').attr('href');
+      const mapUrl = $('i.fa-map-marker').parent().find('a').attr('href');
+      let capacity = 0;
 
-      const description = [];
+      const descriptions = [];
       $("h2:contains('Description')")
         .next('ul')
         .find('li')
         .each(function () {
-          description.push($(this).text().trim());
+          if (
+            $(this).text().trim().includes('Capacity') ||
+            $(this).text().trim().includes('Count')
+          )
+            capacity = CrawlerHelper.extractCapacityForHhsTexasGov(
+              $(this).text().trim(),
+            );
+          descriptions.push($(this).text().trim());
         });
 
       await this.propertyModel.updateOne(
@@ -123,7 +123,7 @@ export class HHSTexasGovSource {
             String(request.url).replace(this.baseUrl + '/', ''),
           ),
         },
-        { phone, descriptions: description, mapUrl: mapLink },
+        { phone, descriptions, mapUrl, capacity },
       );
     } catch (error) {
       this.logger.error(error);
@@ -134,55 +134,6 @@ export class HHSTexasGovSource {
     this.logger.error(
       `The request to "${request.url}" failed with error: ${error}`,
     );
-  }
-
-  // Create A Request List For Searching By Name
-  private async createRequestListOfPropertyNameSearchUrls(): Promise<RequestList> {
-    try {
-      this.logger.debug('HHSTexasGovSource.createListOfPropertyDetailsUrls()');
-      const propertyNames = await this.getAllPropertyNames();
-      this.logger.debug(propertyNames.length);
-      const requestList = await RequestList.open(
-        'propertyNames',
-        propertyNames.map((name) => ({
-          useExtendedUniqueKey: true,
-          url: this.nameSearchUrl,
-          method: 'POST',
-          payload: `searchterm=${name}&factype=all%2Call`,
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        })),
-      );
-      this.logger.debug(requestList.length());
-      return requestList;
-    } catch (error) {
-      this.logger.error(error);
-    }
-  }
-
-  // Create A Request List For Property Details
-  private async createRequestListOfPropertyDetailsUrls(): Promise<RequestList> {
-    try {
-      this.logger.debug('HHSTexasGovSource.createListOfPropertyDetailsUrls()');
-      const propertyDetailsUrls = await this.propertyModel
-        .find({ source: 'hhs.texas.gov' }, { detailsUrl: 1, _id: 0 })
-        .lean()
-        .exec();
-      this.logger.debug(propertyDetailsUrls.length);
-      const requestList = await RequestList.open(
-        'propertyDetails',
-        propertyDetailsUrls.map((url) => ({
-          useExtendedUniqueKey: true,
-          url: this.baseUrl + '/' + url.detailsUrl,
-          method: 'GET',
-        })),
-      );
-      this.logger.debug(requestList.length());
-      return requestList;
-    } catch (error) {
-      this.logger.error(error);
-    }
   }
 
   // Get All the Property Names To Search
@@ -207,20 +158,75 @@ export class HHSTexasGovSource {
       }
 
       names.forEach((name) => {
-        if (
-          ['LLC', 'INC', ' LLC.', ' INC.', 'CORP', ' CORP.'].includes(name) ===
-          false
-        )
-          propertyNames.add(name);
+        // if (
+        //   ['LLC', 'INC', ' LLC.', ' INC.', 'CORP', ' CORP.'].includes(name) ===
+        //   false
+        // )
+        propertyNames.add(name);
       });
-      this.logger.debug(propertyNames.size);
+      this.logger.debug('Total Property Names: ', propertyNames.size);
       return Array.from(propertyNames);
     } catch (error) {
       this.logger.error(error);
     }
   }
 
-  private crawler: CheerioCrawler;
+  // Create A Request List For Searching By Name
+  private async createRequestListOfPropertyNameSearchUrls(): Promise<RequestList> {
+    try {
+      this.logger.debug('HHSTexasGovSource.createListOfPropertyDetailsUrls()');
+
+      const propertyNames = await this.getAllPropertyNames();
+
+      const requestList = await RequestList.open(
+        'propertyNames',
+        propertyNames.map((name) => ({
+          useExtendedUniqueKey: true,
+          url: this.nameSearchUrl,
+          method: 'POST',
+          payload: `searchterm=${name}&factype=all%2Call`,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        })),
+      );
+
+      this.logger.debug('Total Property Search URLs: ', requestList.length());
+
+      return requestList;
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
+  // Create A Request List For Property Details
+  private async createRequestListOfPropertyDetailsUrls(): Promise<RequestList> {
+    try {
+      this.logger.debug('HHSTexasGovSource.createListOfPropertyDetailsUrls()');
+
+      const propertyDetailsUrls = await this.propertyModel
+        .find({ source: 'hhs.texas.gov' }, { detailsUrl: 1, _id: 0 })
+        .lean()
+        .exec();
+
+      this.logger.debug(propertyDetailsUrls.length);
+
+      const requestList = await RequestList.open(
+        'propertyDetails',
+        propertyDetailsUrls.map((url) => ({
+          useExtendedUniqueKey: true,
+          url: this.baseUrl + '/' + url.detailsUrl,
+          method: 'GET',
+        })),
+      );
+
+      this.logger.debug('Total Property Details URLs', requestList.length());
+
+      return requestList;
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
 
   async crawlSearchResult(): Promise<void> {
     try {
@@ -236,7 +242,7 @@ export class HHSTexasGovSource {
         requestHandlerTimeoutSecs: 120,
         maxRequestRetries: 5,
         navigationTimeoutSecs: 120,
-        // maxRequestsPerMinute: 60,//average: 1100+ requests per minute
+        // maxRequestsPerMinute: 60,//average: 1000+ requests per minute
       });
 
       this.logger.debug('HHSTexasGovSource.crawl()');
@@ -262,7 +268,7 @@ export class HHSTexasGovSource {
         requestHandlerTimeoutSecs: 120,
         maxRequestRetries: 5,
         navigationTimeoutSecs: 60,
-        // maxRequestsPerMinute: 60,
+        // maxRequestsPerMinute: 60, //average: 1000+ requests per minute
       });
 
       this.logger.debug('HHSTexasGovSource.crawlDetailsPage()');
@@ -276,15 +282,24 @@ export class HHSTexasGovSource {
 
   // Gracefully shutdown the crawler
   async gracefulShutdown() {
-    console.log('Shutting down gracefully...');
+    this.logger.debug('Shutting down gracefully...');
     try {
+      await this.crawler.autoscaledPool.pause();
       await this.crawler.autoscaledPool.abort();
       await this.crawler.teardown();
-      console.log('Crawler stopped.');
-      process.exit(0);
+      this.logger.debug('Crawler stopped.');
+      // if (process.env.NODE_ENV === 'local') process.exit(0);
     } catch (error) {
-      console.error('Error during shutdown:', error);
-      process.exit(1);
+      this.logger.error('Error while shutting down the crawler.', error);
+      // if (process.env.NODE_ENV === 'local') process.exit(1);
+    }
+  }
+
+  isCrawlerRunning(): boolean {
+    try {
+      return this.crawler?.running ?? false;
+    } catch (error) {
+      this.logger.error(error);
     }
   }
 }

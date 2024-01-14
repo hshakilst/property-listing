@@ -1,28 +1,38 @@
+# Step 1: Build the application
+FROM node:lts as builder
+
+WORKDIR /usr/src/app
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Copy entire workspace
+COPY . .
+
+# Change to the specific package directory
+WORKDIR /usr/src/app/backend
+
+# Install dependencies and build
+RUN pnpm install
+RUN pnpm build
+
+# Step 2: Production stage
 FROM node:lts-alpine
 
-ENV NODE_ENV=${NODE_ENV}
+WORKDIR /usr/src/app
 
 RUN npm install -g pnpm
 
-WORKDIR /app
-
-# Setup dependencies and envs
-COPY package.json ./
-COPY pnpm-lock.yaml ./
-COPY .env.${NODE_ENV} ./.env.${NODE_ENV}
-
-# Copy source code
-COPY . .
+# Copy necessary files
+COPY --from=builder /usr/src/app/backend/dist ./dist
+COPY --from=builder /usr/src/app/backend/package.json ./
 
 # Install dependencies
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --prod
 RUN pnpx playwright install --with-deps chromium
 
-# Build source code
-RUN pnpm build
-
 # Expose port
-EXPOSE 3000
+EXPOSE 8080
 
 # Start the app
-CMD [ "pnpm", "start" ]
+CMD [ "pnpm", "start:prod" ]

@@ -1,8 +1,10 @@
 import {
   Controller,
+  Get,
   Param,
   ParseUUIDPipe,
   Post,
+  Query,
   UploadedFile,
   UseInterceptors,
   UsePipes,
@@ -10,6 +12,7 @@ import {
 import { AppService } from './app.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FileTypeValidationPipe } from './common/pipes/file.pipe';
+import { EnumValidationPipe } from './common/pipes/enum.pipe';
 
 @Controller('api')
 export class AppController {
@@ -32,5 +35,18 @@ export class AppController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     return this.appService.uploadImage(propertyId, file);
+  }
+
+  @Get('search')
+  async searchProperty(@Query('keyword') searchTerm: string) {
+    return this.appService.searchProperty(searchTerm);
+  }
+
+  @Get('crawler/:command')
+  async controlCrawler(
+    @Param('command', new EnumValidationPipe(['start', 'stop']))
+    command: 'start' | 'stop',
+  ) {
+    return this.appService.controlCrawler(command);
   }
 }

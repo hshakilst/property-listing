@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { HHSTexasGovSource } from './sources/hhs-texas-gov.source';
-import { performance } from 'perf_hooks';
 
 @Injectable()
 export class CrawlerService {
@@ -12,29 +11,17 @@ export class CrawlerService {
     private readonly hhsTexas: HHSTexasGovSource,
   ) {}
 
+  private stopFlag: boolean;
+
   // Crawl apps.hhs.texas.gov
   async crawlAppsHhsTexasGov() {
     this.logger.debug('CrawlerService.crawlAppsHhsTexasGov()');
 
-    performance.mark('start search');
     await this.hhsTexas.crawlSearchResult();
-    performance.mark('end search');
 
-    performance.measure('search', 'start search', 'end search');
+    if (this.stopFlag) return;
 
-    performance.mark('start details');
     await this.hhsTexas.crawlDetailsPage();
-    performance.mark('end details');
-
-    performance.measure('details', 'start details', 'end details');
-
-    const searchMeasures = performance.getEntriesByName('search');
-    const detailsMeasures = performance.getEntriesByName('details');
-
-    this.logger.debug('Search Measures: ', searchMeasures);
-    this.logger.debug('Details Measures: ', detailsMeasures);
-
-    performance.clearMarks();
 
     this.logger.debug('CrawlerService.crawlAppsHhsTexasGov() completed');
   }
@@ -51,5 +38,16 @@ export class CrawlerService {
     const job = this.schedulerRegistry.getCronJob('crawl-apps.hhs.texas.gov');
     job.stop();
     return 'Stop Scheduled Crawling Jobs';
+  }
+
+  async startCrawling() {
+    if (!this.hhsTexas.isCrawlerRunning()) await this.crawlAppsHhsTexasGov();
+  }
+
+  async stopCrawling() {
+    if (this.hhsTexas.isCrawlerRunning()) {
+      this.stopFlag = true;
+      await this.hhsTexas.gracefulShutdown();
+    }
   }
 }

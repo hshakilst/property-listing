@@ -1,6 +1,6 @@
 import { CrawlerService } from './../crawler/crawler.service';
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression, Timeout } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class CronService {
@@ -8,10 +8,9 @@ export class CronService {
 
   constructor(private readonly crawler: CrawlerService) {}
 
-  //   @Cron(CronExpression.EVERY_DAY_AT_5AM, {
-  //     name: 'crawl-apps.hhs.texas.gov',
-  //   })
-  @Timeout(5000)
+  @Cron(CronExpression.EVERY_DAY_AT_5AM, {
+    name: 'crawl-apps.hhs.texas.gov',
+  })
   handleCrawlAppsHhsTexasGov() {
     try {
       this.logger.debug('CronService.handleCrawlAppsHhsTexasGov()');

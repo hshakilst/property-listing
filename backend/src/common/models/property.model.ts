@@ -18,6 +18,9 @@ export class PropertyModel extends BaseModel {
   @Prop({ required: true })
   name: string;
 
+  @Prop({ required: true, type: Number, default: 0 })
+  capacity: number;
+
   @Prop({ required: true })
   city: string;
 
