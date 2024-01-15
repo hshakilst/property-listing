@@ -1,4 +1,21 @@
+"use client";
+import { useState } from "react";
+
 const NavBar: React.FC = () => {
+  const [crawlerRunning, setCrawlerRunning] = useState(false);
+
+  const handleStartCrawler = async () => {
+    setCrawlerRunning(true);
+    const data = await handleCrawler("start");
+    if (data?.message) alert(data?.message);
+  };
+
+  const handleStopCrawler = async () => {
+    setCrawlerRunning(false);
+    const data = await handleCrawler("stop");
+    if (data?.message) alert(data?.message);
+  };
+
   return (
     <div className="navbar bg-base-100">
       <div className="navbar-start">
@@ -52,12 +69,39 @@ const NavBar: React.FC = () => {
         </ul>
       </div>
       <div className="navbar-end px-4">
-        <a className="btn btn-primary">Start Crawler</a>
+        <button
+          className="btn btn-primary"
+          disabled={crawlerRunning}
+          onClick={handleStartCrawler}
+        >
+          Start Crawler
+        </button>
         <div className="divider divider-horizontal"></div>
-        <a className="btn btn-primary">Stop Crawler</a>
+        <button
+          className="btn btn-primary"
+          disabled={!crawlerRunning}
+          onClick={handleStopCrawler}
+        >
+          Stop Crawler
+        </button>
       </div>
     </div>
   );
 };
+
+async function handleCrawler(
+  command: "start" | "stop"
+): Promise<{ message: string } | null> {
+  if (!command) return null;
+  const response = await fetch(`api/crawler?command=${command}`);
+
+  if (!response?.ok) return null;
+
+  const result: { message: string } = await response.json();
+
+  if (!result?.message) return null;
+
+  return result;
+}
 
 export default NavBar;

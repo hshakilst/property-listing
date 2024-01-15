@@ -8,3 +8,5 @@ export const sanitizeParams = (
 
   return param;
 };
+
+export const fetcher = (url:string) => fetch(url).then((res) => res.json());

@@ -32,7 +32,8 @@ export class AppService {
     try {
       if (!propertyId)
         throw new BadRequestException('propertyId cannot be empty.');
-      if (!file?.size) throw new BadRequestException('File cannot be empty.');
+      if (file?.size < 1000)
+        throw new BadRequestException('File cannot less than 1KB.');
 
       const key =
         this.configService.get('PUBLIC_IMAGE_STORAGE_PATH') +
