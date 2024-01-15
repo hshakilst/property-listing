@@ -19,9 +19,12 @@ export class AppService {
 
   private readonly logger = new Logger(AppService.name);
 
+  // Very basic way for preventing noSQL Injection
+  private mongoInjection = /[\{\}\[\]\$]/g;
+
   async uploadImage(propertyId: string, file: Express.Multer.File) {
     try {
-      if (!propertyId?.length)
+      if (!propertyId)
         throw new BadRequestException('propertyId cannot be empty.');
       if (!file?.size) throw new BadRequestException('File cannot be empty.');
 
@@ -43,24 +46,44 @@ export class AppService {
 
   async searchProperty(searchTerm: string): Promise<Property[]> {
     try {
-      if (!searchTerm?.length || searchTerm?.length < 3)
+      if (!searchTerm || searchTerm?.length < 3)
         throw new BadRequestException(
-          'Search term can not be less than 3 characters.',
+          `Search term 'q' can not be less than 3 characters.`,
         );
 
       const results = await this.propertyModel
         .find({
           $or: [
-            { state: { $regex: searchTerm, $options: 'i' } },
-            { city: { $regex: searchTerm, $options: 'i' } },
-            { name: { $regex: searchTerm, $options: 'i' } },
-            { county: { $regex: searchTerm, $options: 'i' } },
+            {
+              state: {
+                $regex: searchTerm.replace(this.mongoInjection, ''),
+                $options: 'i',
+              },
+            },
+            {
+              city: {
+                $regex: searchTerm.replace(this.mongoInjection, ''),
+                $options: 'i',
+              },
+            },
+            {
+              name: {
+                $regex: searchTerm.replace(this.mongoInjection, ''),
+                $options: 'i',
+              },
+            },
+            {
+              county: {
+                $regex: searchTerm.replace(this.mongoInjection, ''),
+                $options: 'i',
+              },
+            },
           ],
         })
         .lean()
         .exec();
 
-      if (!results?.length) return [];
+      if (!results?.length) return null;
 
       return results.map((result) => ({
         externalId: result.externalId,
@@ -77,7 +100,52 @@ export class AppService {
         source: result.source,
         mapUrl: result.mapUrl,
         descriptions: result.descriptions,
+        detailsUrl: 'https://apps.hhs.texas.gov/LTCSearch/' + result.detailsUrl,
       }));
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
+  async getProperty(
+    externalId: string,
+    type: string,
+    state: string,
+  ): Promise<Property> {
+    try {
+      if (!externalId)
+        throw new BadRequestException('externalId cannot be empty.');
+      if (!type) throw new BadRequestException('propType cannot be empty.');
+      if (!state) throw new BadRequestException('state cannot be empty,');
+
+      const result = await this.propertyModel
+        .findOne({
+          externalId: externalId.replace(this.mongoInjection, ''),
+          type: type.replace(this.mongoInjection, ''),
+          state: state.replace(this.mongoInjection, ''),
+        })
+        .lean()
+        .exec();
+
+      if (!result?._id) return null;
+
+      return {
+        externalId: result.externalId,
+        name: result.name,
+        capacity: result.capacity,
+        city: result.city,
+        zip: result.zip,
+        state: result.state,
+        imageUrls: result.imageUrls,
+        address: result.address,
+        county: result.county,
+        phone: result.phone,
+        type: result.type,
+        source: result.source,
+        mapUrl: result.mapUrl,
+        descriptions: result.descriptions,
+        detailsUrl: 'https://apps.hhs.texas.gov/LTCSearch/' + result.detailsUrl,
+      };
     } catch (error) {
       this.logger.error(error);
     }

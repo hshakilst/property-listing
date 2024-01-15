@@ -38,8 +38,17 @@ export class AppController {
   }
 
   @Get('search')
-  async searchProperty(@Query('keyword') searchTerm: string) {
+  async searchProperty(@Query('q') searchTerm: string) {
     return this.appService.searchProperty(searchTerm);
+  }
+
+  @Get('property/:externalId')
+  async getProperty(
+    @Param('externalId') externalId: string,
+    @Query('type') type: string,
+    @Query('state') state: string,
+  ) {
+    return this.appService.getProperty(externalId, type, state);
   }
 
   @Get('crawler/:command')

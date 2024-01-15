@@ -34,12 +34,18 @@
   "cSpell.words": [
     "autoscaled",
     "crawlee",
+    "daisyui",
     "factype",
     "ftype",
     "healthfinder",
     "locsearch",
+    "picsum",
     "PPECC",
     "searchterm",
-    "sortabletable"
-  ]
+    "sortabletable",
+    "swiper"
+  ],
+  "[dockerfile]": {
+    "editor.defaultFormatter": "ms-azuretools.vscode-docker"
+  }
 }

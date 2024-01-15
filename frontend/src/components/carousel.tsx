@@ -2,11 +2,7 @@
 import { Swiper, SwiperSlide } from "swiper/react";
 import { EffectFade, Navigation, Pagination } from "swiper/modules";
 import Image from "next/image";
-
-type ImageData = {
-  src: string;
-  alt: string;
-};
+import { ImageData } from "@/lib/types";
 
 type CarouselProps = {
   images: ImageData[];

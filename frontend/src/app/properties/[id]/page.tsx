@@ -1,3 +1,4 @@
+"use server";
 import Carousel from "@/components/carousel";
 import DetailsSection from "@/components/details-section";
 import GoogleMap from "@/components/google-map";
