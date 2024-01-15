@@ -38,7 +38,17 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = async ({
           </div>
         </div>
 
-        <div className="md:col-span-2 flex justify-center items-center">
+        <div className="md:col-span-1 inline-flex justify-center">
+          <div className="p-4 border border-gray-200 rounded-lg ">
+            <input
+              type="file"
+              className="file-input file-input-bordered file-input-primary w-full max-w-xs"
+            />
+            <button className="btn btn-primary ms-4">Upload</button>
+          </div>
+        </div>
+
+        <div className="md:col-span-2 flex justify-center items-center gap-4">
           <div className="p-4 border border-gray-200 rounded-lg">
             <GoogleMap src={data?.mapUrl} />
           </div>
