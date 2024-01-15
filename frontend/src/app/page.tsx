@@ -1,6 +1,7 @@
 "use server";
 import CardGrid from "@/components/card-grid";
 import SearchBar from "@/components/search-bar";
+import { sanitizeParams } from "@/lib/helper";
 import { mapResponseToCardData } from "@/lib/mapper";
 import { CardData, PropertyResponse } from "@/lib/types";
 
@@ -10,8 +11,7 @@ type HomeProps = {
 
 const Home: React.FC<HomeProps> = async ({ searchParams }) => {
   // Need Some Basic Sanitization
-  const rawQuery = searchParams?.q ?? null;
-  const query = rawQuery && Array.isArray(rawQuery) ? rawQuery[0] : rawQuery;
+  const query = sanitizeParams(searchParams?.q);
 
   const cardsData = await getCardsData(query);
 

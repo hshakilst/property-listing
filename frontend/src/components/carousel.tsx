@@ -30,7 +30,7 @@ const Carousel: React.FC<CarouselProps> = ({ images }) => {
               alignItems: "center",
             }}
           >
-            <Image src={image.src} alt={image.alt} width={500} height={300} />
+            <Image src={image.src} alt={image.alt} width={500} height={400} />
           </SwiperSlide>
         ))}
       </Swiper>

@@ -10,6 +10,12 @@ export type ImageData = {
   alt: string;
 };
 
+export type PropertyDetailsPage = {
+  details: PropertyDetailsData
+  mapUrl: string;
+  images: ImageData[];
+}
+
 export type PropertyDetailsData = {
   name: string;
   capacity: number;
@@ -37,10 +43,10 @@ export type PropertyResponse = {
   imageUrls: string[];
   address: string;
   county: string;
-  phone?: string;
+  phone: string;
   type: string;
   source: PropertySource;
-  mapUrl?: string;
-  descriptions?: string[];
-  detailsUrl?: string;
+  mapUrl: string;
+  descriptions: string[];
+  detailsUrl: string;
 }

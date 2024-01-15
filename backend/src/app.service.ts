@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { S3Service } from './providers/s3/s3.service';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
@@ -6,6 +11,7 @@ import { PropertyModel } from './common/models/property.model';
 import { Model } from 'mongoose';
 import { Property } from './common/types/property.type';
 import { CrawlerService } from './services/crawler/crawler.service';
+import { CrawlerHelper } from './common/helpers/crawler.helper';
 
 @Injectable()
 export class AppService {
@@ -41,6 +47,7 @@ export class AppService {
       };
     } catch (error) {
       this.logger.error(error);
+      throw error;
     }
   }
 
@@ -83,27 +90,34 @@ export class AppService {
         .lean()
         .exec();
 
-      if (!results?.length) return null;
+      if (!results?.length) throw new NotFoundException('Results Not Found.');
 
       return results.map((result) => ({
-        externalId: result.externalId,
-        name: result.name,
-        capacity: result.capacity,
-        city: result.city,
-        zip: result.zip,
-        state: result.state,
-        imageUrls: result.imageUrls,
-        address: result.address,
-        county: result.county,
-        phone: result.phone,
-        type: result.type,
-        source: result.source,
-        mapUrl: result.mapUrl,
-        descriptions: result.descriptions,
-        detailsUrl: 'https://apps.hhs.texas.gov/LTCSearch/' + result.detailsUrl,
+        externalId: result?.externalId,
+        name: result?.name,
+        capacity: result?.capacity,
+        city: result?.city,
+        zip: result?.zip,
+        state: result?.state,
+        imageUrls: result?.imageUrls,
+        address: result?.address,
+        county: result?.county,
+        phone: result?.phone,
+        type: result?.type,
+        source: result?.source,
+        mapUrl:
+          result?.source === 'hhs.texas.gov'
+            ? CrawlerHelper.handleMapUrlForHhsTexasGov(result?.mapUrl)
+            : result?.mapUrl,
+        descriptions: result?.descriptions,
+        detailsUrl:
+          result?.source === 'hhs.texas.gov'
+            ? 'https://apps.hhs.texas.gov/LTCSearch/' + result?.detailsUrl
+            : result?.detailsUrl,
       }));
     } catch (error) {
       this.logger.error(error);
+      throw error;
     }
   }
 
@@ -127,27 +141,34 @@ export class AppService {
         .lean()
         .exec();
 
-      if (!result?._id) return null;
+      if (!result?._id) throw new NotFoundException('Results Not Found.');
 
       return {
-        externalId: result.externalId,
-        name: result.name,
-        capacity: result.capacity,
-        city: result.city,
-        zip: result.zip,
-        state: result.state,
-        imageUrls: result.imageUrls,
-        address: result.address,
-        county: result.county,
-        phone: result.phone,
-        type: result.type,
-        source: result.source,
-        mapUrl: result.mapUrl,
-        descriptions: result.descriptions,
-        detailsUrl: 'https://apps.hhs.texas.gov/LTCSearch/' + result.detailsUrl,
+        externalId: result?.externalId,
+        name: result?.name,
+        capacity: result?.capacity,
+        city: result?.city,
+        zip: result?.zip,
+        state: result?.state,
+        imageUrls: result?.imageUrls,
+        address: result?.address,
+        county: result?.county,
+        phone: result?.phone,
+        type: result?.type,
+        source: result?.source,
+        mapUrl:
+          result?.source === 'hhs.texas.gov'
+            ? CrawlerHelper.handleMapUrlForHhsTexasGov(result?.mapUrl)
+            : result?.mapUrl,
+        descriptions: result?.descriptions,
+        detailsUrl:
+          result?.source === 'hhs.texas.gov'
+            ? 'https://apps.hhs.texas.gov/LTCSearch/' + result?.detailsUrl
+            : result?.detailsUrl,
       };
     } catch (error) {
       this.logger.error(error);
+      throw error;
     }
   }
 
@@ -167,6 +188,7 @@ export class AppService {
       }
     } catch (error) {
       this.logger.error(error);
+      throw error;
     }
   }
 }
