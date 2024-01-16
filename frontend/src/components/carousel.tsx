@@ -1,6 +1,6 @@
 "use client";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { EffectFade, Navigation, Pagination } from "swiper/modules";
+import { Navigation, Pagination } from "swiper/modules";
 import Image from "next/image";
 import { ImageData } from "@/lib/types";
 
@@ -13,12 +13,11 @@ const Carousel: React.FC<CarouselProps> = ({ images }) => {
     <>
       <Swiper
         spaceBetween={30}
-        effect={"fade"}
         navigation={true}
         pagination={{
           clickable: true,
         }}
-        modules={[EffectFade, Navigation, Pagination]}
+        modules={[Navigation, Pagination]}
         className="mySwiper"
       >
         {images.map((image, index) => (
@@ -30,7 +29,13 @@ const Carousel: React.FC<CarouselProps> = ({ images }) => {
               alignItems: "center",
             }}
           >
-            <Image src={image.src} alt={image.alt} width={500} height={400} />
+            <Image
+              src={image.src}
+              alt={image.alt}
+              width={500}
+              height={400}
+              priority
+            />
           </SwiperSlide>
         ))}
       </Swiper>

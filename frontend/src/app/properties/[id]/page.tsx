@@ -1,5 +1,6 @@
 import Carousel from "@/components/carousel";
 import DetailsSection from "@/components/details-section";
+import FileUpload from "@/components/file-upload";
 import GoogleMap from "@/components/google-map";
 import { sanitizeParams } from "@/lib/helper";
 import { mapResponseToPropertyDetailsData } from "@/lib/mapper";
@@ -40,11 +41,7 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = async ({
 
         <div className="md:col-span-1 inline-flex justify-center">
           <div className="p-4 border border-gray-200 rounded-lg ">
-            <input
-              type="file"
-              className="file-input file-input-bordered file-input-primary w-full max-w-xs"
-            />
-            <button className="btn btn-primary ms-4">Upload</button>
+            <FileUpload id={id} type={type} source={source} />
           </div>
         </div>
 
@@ -68,8 +65,8 @@ async function getPropertyDetailsPageData(
   if (!source) return null;
 
   const response = await fetch(
-    `${process.env.API_URL ?? "http://localhost:8080/api"}` +
-      `/property/${id}?type=${type}&source=${source}`
+    `${process.env.API_URL}` + `/property/${id}?type=${type}&source=${source}`,
+    { cache: "no-cache" }
   );
 
   if (!response?.ok) return null;
