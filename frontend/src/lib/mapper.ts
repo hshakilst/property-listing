@@ -14,6 +14,7 @@ export const mapResponseToCardData = (
     title: property?.name,
     propertyType: property?.type,
     state: property?.state,
+    source: property?.source
   }));
 };
 

@@ -17,9 +17,9 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = async ({
 }: PropertyDetailsProps) => {
   const id = sanitizeParams(params?.id);
   const type = sanitizeParams(searchParams?.type);
-  const state = sanitizeParams(searchParams?.state);
+  const source = sanitizeParams(searchParams?.source);
 
-  const data = await getPropertyDetailsPageData(id, type, state);
+  const data = await getPropertyDetailsPageData(id, type, source);
 
   if (data === null || data === undefined) redirect("/");
 
@@ -61,15 +61,15 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = async ({
 async function getPropertyDetailsPageData(
   id: string | null,
   type: string | null,
-  state: string | null
+  source: string | null
 ): Promise<PropertyDetailsPage | null> {
   if (!id) return null;
   if (!type) return null;
-  if (!state) return null;
+  if (!source) return null;
 
   const response = await fetch(
     `${process.env.API_URL ?? "http://localhost:8080/api"}` +
-      `/property/${id}?type=${type}&state=${state}`
+      `/property/${id}?type=${type}&source=${source}`
   );
 
   if (!response?.ok) return null;

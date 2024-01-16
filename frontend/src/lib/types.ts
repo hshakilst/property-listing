@@ -3,6 +3,7 @@ export type CardData = {
   title: string;
   propertyType: string;
   state: string;
+  source: string;
 };
 
 export type ImageData = {

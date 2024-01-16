@@ -12,6 +12,7 @@ import { Model } from 'mongoose';
 import { Property } from './common/types/property.type';
 import { CrawlerService } from './services/crawler/crawler.service';
 import { CrawlerHelper } from './common/helpers/crawler.helper';
+import { FileModel } from './common/models/file.model';
 
 @Injectable()
 export class AppService {
@@ -20,29 +21,75 @@ export class AppService {
     private readonly configService: ConfigService,
     @InjectModel(PropertyModel.name)
     private readonly propertyModel: Model<PropertyModel>,
+    @InjectModel(FileModel.name)
+    private readonly fileModel: Model<FileModel>,
     private readonly crawlerService: CrawlerService,
   ) {}
 
   private readonly logger = new Logger(AppService.name);
 
-  // Very basic way for preventing noSQL Injection
+  //! Very basic way for preventing noSQL Injection. Do not include dot(.)
   private mongoInjection = /[\{\}\[\]\$]/g;
 
-  async uploadImage(propertyId: string, file: Express.Multer.File) {
+  async uploadImage(
+    externalId: string,
+    type: string,
+    source: string,
+    file: Express.Multer.File,
+  ) {
     try {
-      if (!propertyId)
-        throw new BadRequestException('propertyId cannot be empty.');
-      if (file?.size < 1000)
-        throw new BadRequestException('File cannot less than 1KB.');
+      if (!externalId)
+        throw new BadRequestException('externalId cannot be empty.');
+      if (!type) throw new BadRequestException('type cannot be empty.');
+      if (!source) throw new BadRequestException('source cannot be empty.');
+
+      const property = await this.propertyModel
+        .findOne({
+          externalId: externalId.replace(this.mongoInjection, ''),
+          type: type.replace(this.mongoInjection, ''),
+          source: source.replace(this.mongoInjection, ''),
+        })
+        .exec();
+
+      if (!property?._id) throw new NotFoundException('Property not found.');
 
       const key =
         this.configService.get('PUBLIC_IMAGE_STORAGE_PATH') +
-        '/' +
-        propertyId +
-        '/' +
-        Date.now() +
-        '.jpg';
-      await this.s3Service.putItem(file, key);
+        `/${source}` +
+        `/${type}` +
+        `/${externalId}` +
+        //! Need to sanitize the file name
+        `/${file.originalname.replace(/\s/g, '+')}`;
+
+      const statusCode = await this.s3Service.putItem(file, key);
+
+      if (statusCode !== 200)
+        throw new BadRequestException('File Upload Failed.');
+
+      const publicUrl = this.s3Service.getPublicUrl(key);
+
+      await this.fileModel.updateOne(
+        {
+          externalId: property?.id,
+          key: key,
+        },
+        {
+          externalId: property?.id,
+          key: key,
+          name: file?.originalname,
+          size: file?.size,
+          mimeType: file?.mimetype,
+          url: publicUrl,
+        },
+        {
+          upsert: true,
+        },
+      );
+
+      if (!property.imageUrls?.includes(publicUrl))
+        property.imageUrls.push(publicUrl);
+      await property.save();
+
       return {
         url: this.s3Service.getPublicUrl(key),
       };
@@ -125,19 +172,19 @@ export class AppService {
   async getProperty(
     externalId: string,
     type: string,
-    state: string,
+    source: string,
   ): Promise<Property> {
     try {
       if (!externalId)
         throw new BadRequestException('externalId cannot be empty.');
       if (!type) throw new BadRequestException('propType cannot be empty.');
-      if (!state) throw new BadRequestException('state cannot be empty,');
+      if (!source) throw new BadRequestException('source cannot be empty,');
 
       const result = await this.propertyModel
         .findOne({
           externalId: externalId.replace(this.mongoInjection, ''),
           type: type.replace(this.mongoInjection, ''),
-          state: state.replace(this.mongoInjection, ''),
+          source: source.replace(this.mongoInjection, ''),
         })
         .lean()
         .exec();

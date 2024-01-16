@@ -8,6 +8,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ProvidersModule } from './providers/providers.module';
 import { ServicesModule } from './services/services.module';
 import { PropertyModel, PropertySchema } from './common/models/property.model';
+import { FileModel, FileSchema } from './common/models/file.model';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { PropertyModel, PropertySchema } from './common/models/property.model';
     ScheduleModule.forRoot(),
     MongooseModule.forFeature([
       { name: PropertyModel.name, schema: PropertySchema },
+      { name: FileModel.name, schema: FileSchema },
     ]),
     ProvidersModule,
     ServicesModule,

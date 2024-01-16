@@ -2,12 +2,10 @@ import {
   Controller,
   Get,
   Param,
-  ParseUUIDPipe,
   Post,
   Query,
   UploadedFile,
   UseInterceptors,
-  UsePipes,
 } from '@nestjs/common';
 import { AppService } from './app.service';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -18,7 +16,7 @@ import { EnumValidationPipe } from './common/pipes/enum.pipe';
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Post('image/:propertyId')
+  @Post('upload/:externalId')
   @UseInterceptors(
     FileInterceptor('file', {
       limits: {
@@ -26,15 +24,20 @@ export class AppController {
       },
     }),
   )
-  @UsePipes(
-    new FileTypeValidationPipe(['image/png', 'image/jpeg', 'image/gif']),
-  )
   async uploadImage(
     // Implement Joi Validation for request params and Also Response DTO.
-    @Param('propertyId', ParseUUIDPipe) propertyId: string,
-    @UploadedFile() file: Express.Multer.File,
+    @Param('externalId') externalId: string,
+    @Query('source') source: string,
+    @Query('type') type: string,
+    @UploadedFile(
+      new FileTypeValidationPipe(
+        ['image/png', 'image/jpeg'],
+        ['.jpg', '.jpeg', '.png'],
+      ),
+    )
+    file: Express.Multer.File,
   ) {
-    return this.appService.uploadImage(propertyId, file);
+    return this.appService.uploadImage(externalId, type, source, file);
   }
 
   @Get('search')
@@ -46,9 +49,9 @@ export class AppController {
   async getProperty(
     @Param('externalId') externalId: string,
     @Query('type') type: string,
-    @Query('state') state: string,
+    @Query('source') source: string,
   ) {
-    return this.appService.getProperty(externalId, type, state);
+    return this.appService.getProperty(externalId, type, source);
   }
 
   @Get('crawler/:command')

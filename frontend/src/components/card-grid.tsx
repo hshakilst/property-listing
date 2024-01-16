@@ -16,6 +16,7 @@ const CardGrid: React.FC<CardGridProps> = ({ cardsData }) => {
             title={card.title}
             propertyType={card.propertyType}
             state={card.state}
+            source={card.source}
           />
         ))}
     </div>
