@@ -83,7 +83,7 @@ export class HHSTexasGovSource {
             source: 'hhs.texas.gov',
             sourceUrl,
           },
-          { upsert: true, new: true },
+          { upsert: true },
         );
       });
     } catch (error) {

@@ -3,6 +3,7 @@ node_modules/
 coverage/
 dist/
 .github/
+storage/
 
 # Logs
 logs/
@@ -17,7 +18,7 @@ logs/
 .eslintignore
 .eslintrc.js
 .prettierrc
-.README.md
+README.md
 
 # Files not required for production
 .vscode/

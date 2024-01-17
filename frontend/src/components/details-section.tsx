@@ -29,7 +29,7 @@ const DetailsSection: React.FC<DetailsSectionProps> = ({ data }) => {
       </div>
       <p className="text-xl py-1">
         <a className="link link-accent" href={data?.detailsUrl} target="_blank">
-          Visit the Property on Source's Website
+          Visit the Property on Source Website
         </a>
       </p>
     </div>

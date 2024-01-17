@@ -9,6 +9,7 @@ logs/
 
 # Environment (contains sensitive data)
 .env*
+next-env.d.ts
 
 # Versioning and metadata
 .git
@@ -16,6 +17,7 @@ logs/
 .dockerignore
 .eslintignore
 .eslintrc.js
+.eslintrc.json
 .prettierrc
 .README.md
 

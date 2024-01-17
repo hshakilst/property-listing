@@ -1,38 +1,35 @@
+# Tried to use Multi stage Building and Deploying Production stage where unnecessary code and modules will be removed but ec2 is very low config
 # Step 1: Build the application
-FROM node:lts as builder
+# FROM node:lts as builder
+# Playwright Does not working on alpine image
+FROM node:20-bookworm
 
 WORKDIR /usr/src/app
 
-# Install pnpm
-RUN npm install -g pnpm
-
-# Copy entire workspace
+# Copy backend package
 COPY . .
 
-# Change to the specific package directory
-WORKDIR /usr/src/app/backend
-
 # Install dependencies and build
-RUN pnpm install
-RUN pnpm build
+RUN npm install
+RUN npx -y playwright install --with-deps chromium
+RUN npm run build
 
 # Step 2: Production stage
-FROM node:lts-alpine
+# FROM node:20-
 
-WORKDIR /usr/src/app
+# WORKDIR /usr/src/app
 
-RUN npm install -g pnpm
 
 # Copy necessary files
-COPY --from=builder /usr/src/app/backend/dist ./dist
-COPY --from=builder /usr/src/app/backend/package.json ./
+# COPY --from=builder /usr/src/app/dist ./dist
+# COPY --from=builder /usr/src/app/package*.json ./
 
 # Install dependencies
-RUN pnpm install --prod
-RUN pnpx playwright install --with-deps chromium
+# RUN npm install --prod
+# RUN npx -y playwright install --with-deps
 
 # Expose port
 EXPOSE 8080
 
 # Start the app
-CMD [ "pnpm", "start:prod" ]
+CMD [ "npm", "run","start:prod" ]

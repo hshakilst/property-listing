@@ -1,31 +1,46 @@
 version: "3.8"
 
 services:
-  # property-listing-frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "3000:3000"
-  #   environment:
-  #     - NODE_ENV=development
-  #     - BACKEND_API_URL=http://property-listing-backend:8080
-  #   depends_on:
-  #     - property-listing-backend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - API_URL=http://backend:8080/api
+    networks:
+      - app-network
+    depends_on:
+      - backend
+    restart: unless-stopped
 
-  # property-listing-backend:
-  #   build:
-  #     context: ./backend
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "8080:8080"
-  #   environment:
-  #     - NODE_ENV=development
-  #     - MONGO_URI=mongodb://boomershub:Xq0gYvRjCTxHKzyB@mongodb:27017/property-listing?authSource=admin
-  #   depends_on:
-  #     - mongodb
-  #   networks:
-  #     - app-network
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=production
+      - PORT=8080
+      - MONGO_URI=mongodb://boomershub:Xq0gYvRjCTxHKzyB@mongodb:27017/property-listing?authSource=admin
+      - PUBLIC_IMAGE_STORAGE_PATH=images
+      - AWS_S3_BUCKET_NAME=property-listing
+      - AWS_ACCESS_KEY_ID=AKIAZYXF5D453VPCTP4N
+      - AWS_SECRET_ACCESS_KEY=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
+      - AWS_REGION=us-west-1
+      - CRAWLEE_HEADLESS=true
+      - CRAWLEE_LOG_LEVEL=DEBUG
+      - CRAWLEE_VERBOSE_LOG=true
+      - CRAWLEE_STORAGE_DIR=./storage
+      - CRAWLEE_PURGE_ON_START=true
+    depends_on:
+      - mongodb
+    networks:
+      - app-network
+    restart: unless-stopped
 
   mongodb:
     image: mongo:latest
@@ -39,10 +54,10 @@ services:
       - mongodb_data:/data/db
     networks:
       - app-network
+    restart: unless-stopped
 
 networks:
   app-network:
     driver: bridge
-
 volumes:
   mongodb_data:
