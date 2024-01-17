@@ -2,9 +2,9 @@
 The codebase follows monorepo architecture and uses *pnpm workspaces* that significantly save more memory on disk and installs packages faster than *npm*. The reason I chose this architecture to have a great developer experience as I don't need wait for *npm* to finish installing duplicate node_modules. *pnpm* checks if the module exists or not if it exists it simply links the module to the package you are trying to install it to. For more information [visit pnpm](https://pnpm.io/).
 Though it's monorepo the packages(i.e. backend/frontend) can be deployed to separate containers. And I included this approach when deploying it using docker. Every package is a independent unit of it's own.
 
-# Live Demo Links (In Progress)
-  - [Frontend](https://ec2-3-94-251-68.compute-1.amazonaws.com:3000)
-  - [Backend API Docs](https://ec2-3-94-251-68.compute-1.amazonaws.com:8080/docs)
+# Live Demo Links (Live)
+  - [Frontend](http://ec2-3-94-251-68.compute-1.amazonaws.com:3000)
+  - [Backend API Docs](http://ec2-3-94-251-68.compute-1.amazonaws.com:8080/docs)
 
 # Installation Using Docker
 ```
